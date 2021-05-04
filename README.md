@@ -97,6 +97,20 @@ If you need to support multiple virtual hosts for a container, you can separate 
 
 You can also use wildcards at the beginning and the end of host name, like `*.bar.com` or `foo.bar.*`. Or even a regular expression, which can be very useful in conjunction with a wildcard DNS service like [xip.io](http://xip.io), using `~^foo\.bar\..*\.xip\.io` will match `foo.bar.127.0.0.1.xip.io`, `foo.bar.10.0.2.2.xip.io` and all other given IPs. More information about this topic can be found in the nginx documentation about [`server_names`](http://nginx.org/en/docs/http/server_names.html).
 
+### Path-based Routing
+
+You can proxy multiple containers on a single `VIRTUAL_HOST` by specifying a `VIRTUAL_PATH` environment variable containing the absolute path to where the container should be mounted. The full request URI will be forwarded to the serving container in the `X-Original-URI` header.
+
+For example, if you want to run multiple containers on the same host name under different subdirectories, you can set it up as follows:
+
+```console
+$ docker run -d -p 80:80 -v /var/run/docker.sock:/tmp/docker.sock:ro nginxproxy/nginx-proxy
+$ docker run -d -name service1 -e VIRTUAL_HOST=example.tld -e VIRTUAL_PATH=/foo jwilder/whoami
+$ docker run -d -name service2 -e VIRTUAL_HOST=example.tld -e VIRTUAL_PATH=/bar jwilder/whoami
+```
+
+In this example, request to `http://example.tld/foo` are proxied to `http://service1/foo` and request to `http://example.tld/bar` to `http://service2/bar`.
+
 ### Multiple Networks
 
 With the addition of [overlay networking](https://docs.docker.com/engine/userguide/networking/get-started-overlay/) in Docker 1.9, your `nginx-proxy` container may need to connect to backend containers on multiple networks. By default, if you don't pass the `--net` flag when your `nginx-proxy` container is created, it will only be attached to the default `bridge` network. This means that it will not be able to connect to containers on networks other than `bridge`.
