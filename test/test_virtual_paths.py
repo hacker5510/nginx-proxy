@@ -36,5 +36,5 @@ def test_container_removal(docker_compose, nginxproxy):
     except NotFound:
         pass
     r = nginxproxy.get(f"http://nginx-proxy.test/web2/port")
-    assert r.status_code == 404
+    assert r.status_code in [404, 503]
 
